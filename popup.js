@@ -29,6 +29,7 @@ const emptyEl = document.getElementById("empty-state");
 const formEl = document.getElementById("add-form");
 const inputEl = document.getElementById("new-task");
 const totalEl = document.getElementById("total-time");
+const clearAllEl = document.getElementById("clear-all");
 
 function elapsedMs(task) {
   const base = task.accumulatedMs || 0;
@@ -71,6 +72,7 @@ function updateTotal() {
 function render() {
   listEl.innerHTML = "";
   emptyEl.hidden = tasks.length > 0;
+  clearAllEl.hidden = tasks.length === 0;
   updateTotal();
 
   for (const task of tasks) {
@@ -450,6 +452,16 @@ listEl.addEventListener(
   },
   true
 );
+
+clearAllEl.addEventListener("click", async () => {
+  if (tasks.length === 0) return;
+  if (!confirm(`Delete all ${tasks.length} task${tasks.length === 1 ? "" : "s"}?`)) return;
+  tasks = [];
+  editingTimeId = null;
+  editingNameId = null;
+  await persist();
+  render();
+});
 
 formEl.addEventListener("submit", async (e) => {
   e.preventDefault();

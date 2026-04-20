@@ -279,3 +279,20 @@ header h1 {
   font-size: 12px;
   margin: 16px 0 4px;
 }
+
+#clear-all {
+  display: block;
+  margin: 10px auto 0;
+  padding: 4px 10px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-placeholder);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+#clear-all:hover {
+  color: var(--color-text-danger);
+  background: var(--color-brand-faint);
+}
