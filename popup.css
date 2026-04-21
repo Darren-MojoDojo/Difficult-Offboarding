@@ -280,9 +280,26 @@ header h1 {
   margin: 16px 0 4px;
 }
 
+#footer-actions {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-top: 10px;
+}
+
 #clear-all {
-  display: block;
-  margin: 10px auto 0;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+
+#minus-45 {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+#footer-actions button {
   padding: 4px 10px;
   background: transparent;
   border: none;
@@ -294,5 +311,10 @@ header h1 {
 
 #clear-all:hover {
   color: var(--color-text-danger);
+  background: var(--color-brand-faint);
+}
+
+#minus-45:hover {
+  color: var(--color-text-brand);
   background: var(--color-brand-faint);
 }

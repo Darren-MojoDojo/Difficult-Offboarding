@@ -30,6 +30,7 @@ const formEl = document.getElementById("add-form");
 const inputEl = document.getElementById("new-task");
 const totalEl = document.getElementById("total-time");
 const clearAllEl = document.getElementById("clear-all");
+const minus45El = document.getElementById("minus-45");
 
 function elapsedMs(task) {
   const base = task.accumulatedMs || 0;
@@ -73,6 +74,7 @@ function render() {
   listEl.innerHTML = "";
   emptyEl.hidden = tasks.length > 0;
   clearAllEl.hidden = tasks.length === 0;
+  minus45El.hidden = !tasks.some((t) => t.runningStartedAt);
   updateTotal();
 
   for (const task of tasks) {
@@ -160,11 +162,18 @@ function findTask(id) {
 }
 
 async function addTask(name) {
+  const now = Date.now();
+  for (const other of tasks) {
+    if (other.runningStartedAt) {
+      other.accumulatedMs = (other.accumulatedMs || 0) + (now - other.runningStartedAt);
+      other.runningStartedAt = null;
+    }
+  }
   tasks.unshift({
     id: crypto.randomUUID(),
     name: name.trim(),
     accumulatedMs: 0,
-    runningStartedAt: null,
+    runningStartedAt: now,
   });
   await persist();
   render();
@@ -452,6 +461,12 @@ listEl.addEventListener(
   },
   true
 );
+
+minus45El.addEventListener("click", async () => {
+  const running = tasks.find((t) => t.runningStartedAt);
+  if (!running) return;
+  await adjustTask(running.id, -45 * MINUTE_MS);
+});
 
 clearAllEl.addEventListener("click", async () => {
   if (tasks.length === 0) return;
