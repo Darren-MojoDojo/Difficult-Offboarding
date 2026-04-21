@@ -1,9 +1,13 @@
 const STORAGE_KEY = "tasks";
+const SETTINGS_KEY = "settings";
 const MINUTE_MS = 60 * 1000;
+const DEFAULT_SETTINGS = { maxUntitled: null, quickAdjustMinutes: -45 };
+
+const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage?.local;
 
 const storage = {
   async get() {
-    if (typeof chrome !== "undefined" && chrome.storage?.local) {
+    if (hasChromeStorage) {
       const result = await chrome.storage.local.get(STORAGE_KEY);
       return result[STORAGE_KEY] || [];
     }
@@ -11,7 +15,7 @@ const storage = {
     return raw ? JSON.parse(raw) : [];
   },
   async set(tasks) {
-    if (typeof chrome !== "undefined" && chrome.storage?.local) {
+    if (hasChromeStorage) {
       await chrome.storage.local.set({ [STORAGE_KEY]: tasks });
       return;
     }
@@ -19,7 +23,26 @@ const storage = {
   },
 };
 
+const settingsStore = {
+  async get() {
+    if (hasChromeStorage) {
+      const result = await chrome.storage.local.get(SETTINGS_KEY);
+      return { ...DEFAULT_SETTINGS, ...(result[SETTINGS_KEY] || {}) };
+    }
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    return { ...DEFAULT_SETTINGS, ...(raw ? JSON.parse(raw) : {}) };
+  },
+  async set(settings) {
+    if (hasChromeStorage) {
+      await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+      return;
+    }
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  },
+};
+
 let tasks = [];
+let settings = { ...DEFAULT_SETTINGS };
 let tickHandle = null;
 let editingTimeId = null;
 let editingNameId = null;
@@ -31,6 +54,13 @@ const inputEl = document.getElementById("new-task");
 const totalEl = document.getElementById("total-time");
 const clearAllEl = document.getElementById("clear-all");
 const minus45El = document.getElementById("minus-45");
+const settingsBtn = document.getElementById("settings-btn");
+const settingsOverlay = document.getElementById("settings-overlay");
+const settingsCloseBtn = document.getElementById("settings-close");
+const settingsCancelBtn = document.getElementById("settings-cancel");
+const settingsSaveBtn = document.getElementById("settings-save");
+const maxUntitledInput = document.getElementById("max-untitled");
+const quickAdjustInput = document.getElementById("quick-adjust");
 
 function elapsedMs(task) {
   const base = task.accumulatedMs || 0;
@@ -74,7 +104,14 @@ function render() {
   listEl.innerHTML = "";
   emptyEl.hidden = tasks.length > 0;
   clearAllEl.hidden = tasks.length === 0;
-  minus45El.hidden = !tasks.some((t) => t.runningStartedAt);
+  const adjust = Number(settings.quickAdjustMinutes) || 0;
+  const anyRunning = tasks.some((t) => t.runningStartedAt);
+  minus45El.hidden = !anyRunning || adjust === 0;
+  if (adjust !== 0) {
+    const sign = adjust > 0 ? "+" : "−";
+    minus45El.textContent = `${sign}${Math.abs(adjust)} min`;
+    minus45El.title = `${adjust > 0 ? "Add" : "Subtract"} ${Math.abs(adjust)} minute${Math.abs(adjust) === 1 ? "" : "s"} ${adjust > 0 ? "to" : "from"} the running task`;
+  }
   updateTotal();
 
   for (const task of tasks) {
@@ -161,7 +198,22 @@ function findTask(id) {
   return tasks.find((t) => t.id === id);
 }
 
+function flashInput() {
+  inputEl.classList.remove("shake");
+  // force reflow so the animation can replay
+  void inputEl.offsetWidth;
+  inputEl.classList.add("shake");
+}
+
 async function addTask(name) {
+  const trimmed = name.trim();
+  if (!trimmed && settings.maxUntitled != null) {
+    const existing = tasks.filter((t) => !t.name).length;
+    if (existing >= settings.maxUntitled) {
+      flashInput();
+      return false;
+    }
+  }
   const now = Date.now();
   for (const other of tasks) {
     if (other.runningStartedAt) {
@@ -171,12 +223,13 @@ async function addTask(name) {
   }
   tasks.unshift({
     id: crypto.randomUUID(),
-    name: name.trim(),
+    name: trimmed,
     accumulatedMs: 0,
     runningStartedAt: now,
   });
   await persist();
   render();
+  return true;
 }
 
 async function toggleTask(id) {
@@ -465,7 +518,9 @@ listEl.addEventListener(
 minus45El.addEventListener("click", async () => {
   const running = tasks.find((t) => t.runningStartedAt);
   if (!running) return;
-  await adjustTask(running.id, -45 * MINUTE_MS);
+  const adjust = Number(settings.quickAdjustMinutes) || 0;
+  if (adjust === 0) return;
+  await adjustTask(running.id, adjust * MINUTE_MS);
 });
 
 clearAllEl.addEventListener("click", async () => {
@@ -480,12 +535,68 @@ clearAllEl.addEventListener("click", async () => {
 
 formEl.addEventListener("submit", async (e) => {
   e.preventDefault();
-  await addTask(inputEl.value);
-  inputEl.value = "";
+  const ok = await addTask(inputEl.value);
+  if (ok) inputEl.value = "";
   inputEl.focus();
 });
 
+function openSettings() {
+  maxUntitledInput.value = settings.maxUntitled == null ? "" : String(settings.maxUntitled);
+  quickAdjustInput.value = settings.quickAdjustMinutes == null ? "" : String(settings.quickAdjustMinutes);
+  settingsOverlay.hidden = false;
+  maxUntitledInput.focus();
+}
+
+function closeSettings() {
+  settingsOverlay.hidden = true;
+}
+
+async function saveSettingsFromForm() {
+  const rawMax = maxUntitledInput.value.trim();
+  let maxUntitled = null;
+  if (rawMax !== "") {
+    const n = Number(rawMax);
+    if (Number.isFinite(n) && n >= 0) {
+      maxUntitled = Math.floor(n);
+    }
+  }
+
+  const rawAdjust = quickAdjustInput.value.trim();
+  let quickAdjustMinutes = DEFAULT_SETTINGS.quickAdjustMinutes;
+  if (rawAdjust !== "") {
+    const n = Number(rawAdjust);
+    if (Number.isFinite(n)) {
+      quickAdjustMinutes = Math.trunc(n);
+    }
+  }
+
+  settings = { ...settings, maxUntitled, quickAdjustMinutes };
+  await settingsStore.set(settings);
+  closeSettings();
+  render();
+}
+
+settingsBtn.addEventListener("click", openSettings);
+settingsCloseBtn.addEventListener("click", closeSettings);
+settingsCancelBtn.addEventListener("click", closeSettings);
+settingsSaveBtn.addEventListener("click", saveSettingsFromForm);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !settingsOverlay.hidden) {
+    closeSettings();
+  }
+});
+
+for (const input of [maxUntitledInput, quickAdjustInput]) {
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveSettingsFromForm();
+    }
+  });
+}
+
 (async function init() {
-  tasks = await storage.get();
+  [tasks, settings] = await Promise.all([storage.get(), settingsStore.get()]);
   render();
 })();
