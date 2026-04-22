@@ -1,7 +1,7 @@
 const STORAGE_KEY = "tasks";
 const SETTINGS_KEY = "settings";
 const MINUTE_MS = 60 * 1000;
-const DEFAULT_SETTINGS = { maxUntitled: null, quickAdjustMinutes: -45 };
+const DEFAULT_SETTINGS = { maxUntitled: null, quickAdjustMinutes: 45 };
 
 const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage?.local;
 
@@ -53,7 +53,10 @@ const formEl = document.getElementById("add-form");
 const inputEl = document.getElementById("new-task");
 const totalEl = document.getElementById("total-time");
 const clearAllEl = document.getElementById("clear-all");
-const minus45El = document.getElementById("minus-45");
+const adjustGroupEl = document.getElementById("adjust-group");
+const adjustMinusEl = document.getElementById("adjust-minus");
+const adjustPlusEl = document.getElementById("adjust-plus");
+const adjustLabelEl = document.getElementById("adjust-label");
 const settingsBtn = document.getElementById("settings-btn");
 const settingsOverlay = document.getElementById("settings-overlay");
 const settingsCloseBtn = document.getElementById("settings-close");
@@ -104,13 +107,14 @@ function render() {
   listEl.innerHTML = "";
   emptyEl.hidden = tasks.length > 0;
   clearAllEl.hidden = tasks.length === 0;
-  const adjust = Number(settings.quickAdjustMinutes) || 0;
+  const adjust = Math.abs(Number(settings.quickAdjustMinutes) || 0);
   const anyRunning = tasks.some((t) => t.runningStartedAt);
-  minus45El.hidden = !anyRunning || adjust === 0;
+  adjustGroupEl.hidden = !anyRunning || adjust === 0;
   if (adjust !== 0) {
-    const sign = adjust > 0 ? "+" : "−";
-    minus45El.textContent = `${sign}${Math.abs(adjust)} min`;
-    minus45El.title = `${adjust > 0 ? "Add" : "Subtract"} ${Math.abs(adjust)} minute${Math.abs(adjust) === 1 ? "" : "s"} ${adjust > 0 ? "to" : "from"} the running task`;
+    const plural = adjust === 1 ? "" : "s";
+    adjustLabelEl.textContent = `${adjust} min`;
+    adjustMinusEl.title = `Subtract ${adjust} minute${plural} from the running task`;
+    adjustPlusEl.title = `Add ${adjust} minute${plural} to the running task`;
   }
   updateTotal();
 
@@ -515,13 +519,18 @@ listEl.addEventListener(
   true
 );
 
-minus45El.addEventListener("click", async () => {
-  const running = tasks.find((t) => t.runningStartedAt);
-  if (!running) return;
-  const adjust = Number(settings.quickAdjustMinutes) || 0;
-  if (adjust === 0) return;
-  await adjustTask(running.id, adjust * MINUTE_MS);
-});
+function handleQuickAdjust(direction) {
+  return async () => {
+    const running = tasks.find((t) => t.runningStartedAt);
+    if (!running) return;
+    const adjust = Math.abs(Number(settings.quickAdjustMinutes) || 0);
+    if (adjust === 0) return;
+    await adjustTask(running.id, direction * adjust * MINUTE_MS);
+  };
+}
+
+adjustMinusEl.addEventListener("click", handleQuickAdjust(-1));
+adjustPlusEl.addEventListener("click", handleQuickAdjust(1));
 
 clearAllEl.addEventListener("click", async () => {
   if (tasks.length === 0) return;
@@ -542,7 +551,8 @@ formEl.addEventListener("submit", async (e) => {
 
 function openSettings() {
   maxUntitledInput.value = settings.maxUntitled == null ? "" : String(settings.maxUntitled);
-  quickAdjustInput.value = settings.quickAdjustMinutes == null ? "" : String(settings.quickAdjustMinutes);
+  quickAdjustInput.value =
+    settings.quickAdjustMinutes == null ? "" : String(Math.abs(settings.quickAdjustMinutes));
   settingsOverlay.hidden = false;
   maxUntitledInput.focus();
 }
@@ -566,7 +576,7 @@ async function saveSettingsFromForm() {
   if (rawAdjust !== "") {
     const n = Number(rawAdjust);
     if (Number.isFinite(n)) {
-      quickAdjustMinutes = Math.trunc(n);
+      quickAdjustMinutes = Math.max(0, Math.trunc(Math.abs(n)));
     }
   }
 

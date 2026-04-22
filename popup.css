@@ -33,6 +33,15 @@
   --color-brand: var(--color-indigo-600);
   --color-brand-emphasis: var(--color-indigo-500);
   --color-brand-strong: var(--color-indigo-700);
+
+  /* Liquid glass tokens */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-strong: rgba(255, 255, 255, 0.7);
+  --glass-bg-soft: rgba(255, 255, 255, 0.38);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 1px 2px rgba(30, 27, 75, 0.06), 0 8px 20px rgba(30, 27, 75, 0.08);
+  --glass-blur: blur(20px) saturate(180%);
 }
 
 * {
@@ -44,47 +53,61 @@ body {
   width: 340px;
   min-height: 300px;
   margin: 0;
-  padding: 12px;
-  background: #fafafa;
-  color: #1a1a1a;
+  padding: 14px;
+  color: var(--color-indigo-950);
   display: flex;
   flex-direction: column;
+  background: #EEF2FF;
 }
 
 header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding: 0 2px;
 }
 
 header h1 {
-  font-size: 16px;
+  font-size: 17px;
   margin: 0;
   font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--color-indigo-950);
 }
 
 #total-time {
   font-family: "SF Mono", Menlo, Consolas, monospace;
-  font-size: 14px;
+  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-placeholder);
+  color: var(--color-indigo-800);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), 0 1px 2px rgba(30, 27, 75, 0.05);
 }
 
 #add-form {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
 #new-task {
   flex: 1;
-  padding: 6px 8px;
-  border: 1px solid var(--color-brand-muted);
-  border-radius: 6px;
+  padding: 8px 11px;
+  border: 1px solid var(--glass-border);
+  border-radius: 11px;
   font-size: 13px;
-  background: #fff;
-  color: #1a1a1a;
+  font-family: inherit;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--color-indigo-950);
+  box-shadow: var(--glass-highlight), 0 1px 2px rgba(30, 27, 75, 0.05);
 }
 
 #new-task::placeholder {
@@ -93,23 +116,28 @@ header h1 {
 
 #new-task:focus {
   outline: none;
-  border-color: var(--color-brand);
-  box-shadow: 0 0 0 2px var(--color-brand-faint);
+  border-color: rgba(99, 102, 241, 0.55);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--glass-highlight), 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
 #add-form button {
-  width: 32px;
-  border: none;
-  border-radius: 6px;
-  background: var(--color-brand);
+  width: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 11px;
+  background: linear-gradient(180deg, var(--color-indigo-500), var(--color-indigo-600));
   color: #fff;
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
+  font-family: inherit;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 8px rgba(79, 70, 229, 0.35);
 }
 
 #add-form button:hover {
-  background: var(--color-brand-strong);
+  background: linear-gradient(180deg, var(--color-indigo-600), var(--color-indigo-700));
 }
 
 #task-list {
@@ -118,22 +146,29 @@ header h1 {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .task {
-  background: #fff;
-  border: 1px solid var(--color-brand-muted);
-  border-radius: 8px;
-  padding: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
 }
 
 .task.running {
-  border-color: var(--color-brand);
-  box-shadow: 0 0 0 1px var(--color-brand) inset;
+  background: rgba(238, 242, 255, 0.6);
+  border-color: rgba(99, 102, 241, 0.55);
+  box-shadow:
+    var(--glass-highlight),
+    0 0 0 2px rgba(99, 102, 241, 0.22),
+    0 10px 28px rgba(79, 70, 229, 0.18);
 }
 
 .task-row-top {
@@ -148,12 +183,13 @@ header h1 {
   font-weight: 500;
   word-break: break-word;
   cursor: text;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 3px 6px;
+  border-radius: 7px;
+  color: var(--color-indigo-950);
 }
 
 .task-name:hover {
-  background: var(--color-brand-faint);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .task-name.untitled {
@@ -167,16 +203,17 @@ header h1 {
   font-size: 13px;
   font-weight: 500;
   font-family: inherit;
-  padding: 2px 4px;
-  border: 1px solid var(--color-brand);
-  border-radius: 4px;
-  background: #fff;
+  padding: 3px 6px;
+  border: 1px solid rgba(99, 102, 241, 0.6);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.75);
   min-width: 0;
+  color: var(--color-indigo-950);
 }
 
 .name-edit:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-brand-faint);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
 .delete-btn {
@@ -185,12 +222,14 @@ header h1 {
   color: var(--color-text-placeholder);
   cursor: pointer;
   font-size: 16px;
-  padding: 0 4px;
+  padding: 2px 6px;
   line-height: 1;
+  border-radius: 6px;
 }
 
 .delete-btn:hover {
   color: var(--color-text-danger);
+  background: rgba(225, 29, 72, 0.1);
 }
 
 .task-row-bottom {
@@ -204,18 +243,18 @@ header h1 {
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
-  color: #333;
+  color: var(--color-indigo-950);
   cursor: text;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 3px 6px;
+  border-radius: 7px;
 }
 
 .time-display:hover {
-  background: var(--color-brand-faint);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .task.running .time-display {
-  color: var(--color-text-brand);
+  color: var(--color-brand);
 }
 
 .time-edit {
@@ -223,65 +262,73 @@ header h1 {
   font-family: "SF Mono", Menlo, Consolas, monospace;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
-  color: #333;
-  padding: 2px 4px;
-  border: 1px solid var(--color-brand);
-  border-radius: 4px;
-  background: #fff;
+  color: var(--color-indigo-950);
+  padding: 3px 6px;
+  border: 1px solid rgba(99, 102, 241, 0.6);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.78);
   width: 100%;
   min-width: 0;
 }
 
 .time-edit:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--color-brand-faint);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
 .task button.icon {
   width: 30px;
-  height: 28px;
-  border: 1px solid var(--color-brand-muted);
-  background: #fff;
-  border-radius: 6px;
+  height: 30px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-soft);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border-radius: 9px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: var(--color-indigo-900);
+  font-family: inherit;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--glass-highlight), 0 1px 2px rgba(30, 27, 75, 0.06);
 }
 
 .task button.icon:hover {
-  background: var(--color-brand-faint);
-  border-color: var(--color-brand-subtle);
+  background: var(--glass-bg-strong);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 .start-btn {
-  min-width: 56px;
-  padding: 0 10px;
-}
-
-.start-btn.running {
-  background: var(--color-text-danger) !important;
-  border-color: var(--color-text-danger) !important;
-  color: #fff !important;
-}
-
-.start-btn.running:hover {
-  background: #be123c !important;
-  border-color: #be123c !important;
+  min-width: 60px;
+  padding: 0 12px;
 }
 
 .start-btn:not(.running) {
-  background: var(--color-brand) !important;
-  border-color: var(--color-brand) !important;
+  background: linear-gradient(180deg, var(--color-indigo-500), var(--color-indigo-600)) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
   color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 8px rgba(79, 70, 229, 0.35) !important;
 }
 
 .start-btn:not(.running):hover {
-  background: var(--color-brand-strong) !important;
-  border-color: var(--color-brand-strong) !important;
+  background: linear-gradient(180deg, var(--color-indigo-600), var(--color-indigo-700)) !important;
+}
+
+.start-btn.running {
+  background: linear-gradient(180deg, #fb7185, #e11d48) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 8px rgba(225, 29, 72, 0.35) !important;
+}
+
+.start-btn.running:hover {
+  background: linear-gradient(180deg, #e11d48, #be123c) !important;
 }
 
 #empty-state {
@@ -297,7 +344,7 @@ header h1 {
   align-items: center;
   gap: 6px;
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: 12px;
 }
 
 #clear-all {
@@ -306,17 +353,44 @@ header h1 {
   justify-self: start;
 }
 
-#minus-45 {
+#adjust-group {
   grid-column: 2;
   grid-row: 1;
   justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+#adjust-group[hidden] {
+  display: none;
+}
+
+#adjust-minus,
+#adjust-plus {
+  width: 22px;
+  height: 22px;
+  padding: 0 !important;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 6px;
+}
+
+#adjust-label {
+  font-size: 12px;
+  color: var(--color-text-placeholder);
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
+  min-width: 46px;
+  text-align: center;
 }
 
 #settings-btn {
   grid-column: 3;
   grid-row: 1;
   justify-self: end;
-  padding: 4px !important;
+  padding: 5px !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -325,36 +399,40 @@ header h1 {
 
 #settings-btn:hover {
   color: var(--color-text-brand);
-  background: var(--color-brand-faint);
+  background: rgba(99, 102, 241, 0.1);
 }
 
 #footer-actions button {
-  padding: 4px 10px;
+  padding: 5px 10px;
   background: transparent;
   border: none;
   color: var(--color-text-placeholder);
   font-size: 12px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px;
+  font-family: inherit;
 }
 
 #clear-all:hover {
   color: var(--color-text-danger);
-  background: var(--color-brand-faint);
+  background: rgba(225, 29, 72, 0.1);
 }
 
-#minus-45:hover {
+#adjust-minus:hover,
+#adjust-plus:hover {
   color: var(--color-text-brand);
-  background: var(--color-brand-faint);
+  background: rgba(99, 102, 241, 0.1);
 }
 
 #settings-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(30, 27, 75, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(30, 27, 75, 0.32);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
   z-index: 10;
 }
 
@@ -363,26 +441,32 @@ header h1 {
 }
 
 #settings-panel {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  width: 280px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 18px;
+  padding: 16px;
+  width: 290px;
   max-width: calc(100% - 24px);
-  box-shadow: 0 8px 24px rgba(30, 27, 75, 0.25);
-  border: 1px solid var(--color-brand-muted);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 24px 48px rgba(30, 27, 75, 0.3);
 }
 
 .settings-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .settings-header h2 {
   font-size: 14px;
   font-weight: 600;
   margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--color-indigo-950);
 }
 
 #settings-close {
@@ -392,11 +476,14 @@ header h1 {
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: inherit;
 }
 
 #settings-close:hover {
   color: var(--color-text-danger);
+  background: rgba(225, 29, 72, 0.1);
 }
 
 .settings-row {
@@ -404,58 +491,66 @@ header h1 {
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
-  color: #333;
+  color: var(--color-indigo-900);
 }
 
 .settings-row input {
-  padding: 6px 8px;
-  border: 1px solid var(--color-brand-muted);
-  border-radius: 6px;
+  padding: 8px 11px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
   font-size: 13px;
-  background: #fff;
+  font-family: inherit;
+  background: var(--glass-bg);
+  color: var(--color-indigo-950);
+  box-shadow: var(--glass-highlight);
 }
 
 .settings-row input:focus {
   outline: none;
-  border-color: var(--color-brand);
-  box-shadow: 0 0 0 2px var(--color-brand-faint);
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: var(--glass-highlight), 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
 .settings-hint {
   font-size: 11px;
   color: var(--color-text-placeholder);
-  margin: 6px 0 10px;
+  margin: 6px 0 12px;
 }
 
 .settings-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
 }
 
 .settings-actions button {
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 7px 14px;
+  border-radius: 10px;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  border: 1px solid var(--color-brand-muted);
-  background: #fff;
-  color: #333;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--color-indigo-900);
+  font-family: inherit;
+  box-shadow: var(--glass-highlight);
 }
 
 #settings-save {
-  background: var(--color-brand);
-  border-color: var(--color-brand);
+  background: linear-gradient(180deg, var(--color-indigo-500), var(--color-indigo-600));
+  border-color: rgba(255, 255, 255, 0.3);
   color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 8px rgba(79, 70, 229, 0.35);
 }
 
 #settings-save:hover {
-  background: var(--color-brand-strong);
-  border-color: var(--color-brand-strong);
+  background: linear-gradient(180deg, var(--color-indigo-600), var(--color-indigo-700));
 }
 
 #settings-cancel:hover {
-  background: var(--color-brand-faint);
+  background: var(--glass-bg-strong);
 }
 
 @keyframes shake {
@@ -466,5 +561,6 @@ header h1 {
 
 #new-task.shake {
   animation: shake 0.25s ease-in-out 2;
-  border-color: var(--color-text-danger);
+  border-color: rgba(225, 29, 72, 0.6);
+  box-shadow: var(--glass-highlight), 0 0 0 3px rgba(225, 29, 72, 0.15);
 }
