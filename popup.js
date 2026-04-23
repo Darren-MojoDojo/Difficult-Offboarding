@@ -51,7 +51,9 @@ const listEl = document.getElementById("task-list");
 const emptyEl = document.getElementById("empty-state");
 const formEl = document.getElementById("add-form");
 const inputEl = document.getElementById("new-task");
-const totalEl = document.getElementById("total-time");
+const totalTodayEl = document.getElementById("total-today");
+const totalYesterdayEl = document.getElementById("total-yesterday");
+const yesterdayLabelEl = document.getElementById("yesterday-label");
 const clearAllEl = document.getElementById("clear-all");
 const adjustGroupEl = document.getElementById("adjust-group");
 const adjustMinusEl = document.getElementById("adjust-minus");
@@ -82,6 +84,19 @@ function formatTime(ms) {
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
+const DAY_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: "short" });
+const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+
+function formatDay(ts) {
+  if (!ts) return "";
+  return DAY_FORMATTER.format(new Date(ts));
+}
+
+function formatFullDate(ts) {
+  if (!ts) return "";
+  return DATE_FORMATTER.format(new Date(ts));
+}
+
 // Parse "H:M:S", "M:S", or "S" (or just a number of seconds).
 // Returns ms, or null if invalid.
 function parseTime(input) {
@@ -98,39 +113,43 @@ function parseTime(input) {
   return ((h * 3600) + (m * 60) + s) * 1000;
 }
 
-function updateTotal() {
-  const total = tasks.reduce((sum, t) => sum + elapsedMs(t), 0);
-  totalEl.textContent = formatTime(total);
+function dayStart(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
 }
 
-function render() {
-  listEl.innerHTML = "";
-  emptyEl.hidden = tasks.length > 0;
-  clearAllEl.hidden = tasks.length === 0;
-  const adjust = Math.abs(Number(settings.quickAdjustMinutes) || 0);
-  const anyRunning = tasks.some((t) => t.runningStartedAt);
-  adjustGroupEl.hidden = !anyRunning || adjust === 0;
-  if (adjust !== 0) {
-    const plural = adjust === 1 ? "" : "s";
-    adjustLabelEl.textContent = `${adjust} min`;
-    adjustMinusEl.title = `Subtract ${adjust} minute${plural} from the running task`;
-    adjustPlusEl.title = `Add ${adjust} minute${plural} to the running task`;
+function updateTotal() {
+  const now = Date.now();
+  const todayStart = dayStart(now);
+  const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+
+  let today = 0;
+  let yesterday = 0;
+  for (const t of tasks) {
+    if (!t.createdAt) continue;
+    const created = dayStart(t.createdAt);
+    if (created === todayStart) today += elapsedMs(t);
+    else if (created === yesterdayStart) yesterday += elapsedMs(t);
   }
-  updateTotal();
 
-  for (const task of tasks) {
-    const li = document.createElement("li");
-    li.className = "task" + (task.runningStartedAt ? " running" : "");
-    li.dataset.id = task.id;
+  totalTodayEl.textContent = formatTime(today);
+  totalYesterdayEl.textContent = formatTime(yesterday);
+  yesterdayLabelEl.textContent = DAY_FORMATTER.format(new Date(yesterdayStart));
+}
 
-    const isEditingTime = editingTimeId === task.id;
-    const isEditingName = editingNameId === task.id;
-    const timeStr = formatTime(elapsedMs(task));
-    li.innerHTML = `
+function buildTaskInner(task) {
+  const isEditingTime = editingTimeId === task.id;
+  const isEditingName = editingNameId === task.id;
+  const timeStr = formatTime(elapsedMs(task));
+  const dayLabel = formatDay(task.createdAt);
+  const dayTitle = task.createdAt ? `Created ${formatFullDate(task.createdAt)}` : "";
+  return `
       <div class="task-row-top">
         ${isEditingName
           ? `<input class="name-edit" type="text" maxlength="80" spellcheck="false" />`
           : `<span class="task-name" title="Click to rename"></span>`}
+        ${dayLabel ? `<span class="day-chip" title="${dayTitle}">${dayLabel}</span>` : ""}
         <button class="delete-btn" data-action="delete" title="Delete task">×</button>
       </div>
       <div class="task-row-bottom">
@@ -144,31 +163,71 @@ function render() {
         </button>
       </div>
     `;
+}
 
-    if (isEditingName) {
-      li.querySelector(".name-edit").value = task.name;
+function fillTaskContent(li, task) {
+  li.innerHTML = buildTaskInner(task);
+  const isEditingName = editingNameId === task.id;
+  const isEditingTime = editingTimeId === task.id;
+  if (isEditingName) {
+    const input = li.querySelector(".name-edit");
+    input.value = task.name;
+    input.focus();
+    input.select();
+  } else {
+    const nameEl = li.querySelector(".task-name");
+    if (task.name) {
+      nameEl.textContent = task.name;
     } else {
-      const nameEl = li.querySelector(".task-name");
-      if (task.name) {
-        nameEl.textContent = task.name;
-      } else {
-        nameEl.textContent = "(no title)";
-        nameEl.classList.add("untitled");
-      }
+      nameEl.textContent = "(no title)";
+      nameEl.classList.add("untitled");
     }
+  }
+  if (isEditingTime) {
+    const input = li.querySelector(".time-edit");
+    input.focus();
+    input.select();
+  }
+}
 
-    listEl.appendChild(li);
+function render() {
+  emptyEl.hidden = tasks.length > 0;
+  clearAllEl.hidden = tasks.length === 0;
+  const adjust = Math.abs(Number(settings.quickAdjustMinutes) || 0);
+  const anyRunning = tasks.some((t) => t.runningStartedAt);
+  adjustGroupEl.hidden = !anyRunning || adjust === 0;
+  if (adjust !== 0) {
+    const plural = adjust === 1 ? "" : "s";
+    adjustLabelEl.textContent = `${adjust} min`;
+    adjustMinusEl.title = `Subtract ${adjust} minute${plural} from the running task`;
+    adjustPlusEl.title = `Add ${adjust} minute${plural} to the running task`;
+  }
+  updateTotal();
 
-    if (isEditingName) {
-      const input = li.querySelector(".name-edit");
-      input.focus();
-      input.select();
+  // Diff existing <li> elements by task.id so running-class transitions fire
+  // on persisting nodes instead of freshly-minted ones.
+  const existingById = new Map();
+  for (const li of [...listEl.children]) {
+    existingById.set(li.dataset.id, li);
+  }
+  const currentIds = new Set(tasks.map((t) => t.id));
+  for (const [id, li] of existingById) {
+    if (!currentIds.has(id)) li.remove();
+  }
+
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i];
+    let li = existingById.get(task.id);
+    if (!li) {
+      li = document.createElement("li");
+      li.dataset.id = task.id;
     }
-    if (isEditingTime) {
-      const input = li.querySelector(".time-edit");
-      input.focus();
-      input.select();
+    const atPos = listEl.children[i];
+    if (atPos !== li) {
+      listEl.insertBefore(li, atPos || null);
     }
+    li.className = "task" + (task.runningStartedAt ? " running" : "");
+    fillTaskContent(li, task);
   }
 
   manageTick();
@@ -230,6 +289,7 @@ async function addTask(name) {
     name: trimmed,
     accumulatedMs: 0,
     runningStartedAt: now,
+    createdAt: now,
   });
   await persist();
   render();

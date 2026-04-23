@@ -52,12 +52,42 @@ body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   width: 340px;
   min-height: 300px;
+  max-height: 580px;
   margin: 0;
   padding: 14px;
   color: var(--color-indigo-950);
   display: flex;
   flex-direction: column;
   background: #EEF2FF;
+  overflow: hidden;
+}
+
+#task-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
+  /* pull inside padding so scrollbar sits in the gutter, not the content */
+  padding-right: 2px;
+}
+
+#task-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+#task-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#task-area::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 999px;
+}
+
+#task-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.55);
 }
 
 header {
@@ -76,18 +106,39 @@ header h1 {
   color: var(--color-indigo-950);
 }
 
-#total-time {
-  font-family: "SF Mono", Menlo, Consolas, monospace;
-  font-size: 12.5px;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-indigo-800);
+#totals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.total-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   padding: 3px 10px;
   border-radius: 999px;
   background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-highlight), 0 1px 2px rgba(30, 27, 75, 0.05);
+}
+
+.total-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-placeholder);
+}
+
+.total-value {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-indigo-800);
 }
 
 #add-form {
@@ -160,6 +211,10 @@ header h1 {
   flex-direction: column;
   gap: 8px;
   box-shadow: var(--glass-highlight), var(--glass-shadow);
+  transition:
+    background-color 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease;
 }
 
 .task.running {
@@ -216,6 +271,21 @@ header h1 {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
 }
 
+.day-chip {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-indigo-800);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), 0 1px 2px rgba(30, 27, 75, 0.05);
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+
 .delete-btn {
   border: none;
   background: transparent;
@@ -247,6 +317,7 @@ header h1 {
   cursor: text;
   padding: 3px 6px;
   border-radius: 7px;
+  transition: color 260ms ease;
 }
 
 .time-display:hover {
@@ -303,6 +374,7 @@ header h1 {
 .start-btn {
   min-width: 60px;
   padding: 0 12px;
+  transition: box-shadow 200ms ease, background 200ms ease;
 }
 
 .start-btn:not(.running) {

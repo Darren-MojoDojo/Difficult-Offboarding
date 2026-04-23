@@ -8,7 +8,16 @@
 <body>
   <header>
     <h1>Tasks</h1>
-    <span id="total-time" title="Total time across all tasks">00:00:00</span>
+    <div id="totals">
+      <span class="total-row">
+        <span class="total-label">Today</span>
+        <span class="total-value" id="total-today">00:00:00</span>
+      </span>
+      <span class="total-row">
+        <span class="total-label" id="yesterday-label">Yesterday</span>
+        <span class="total-value" id="total-yesterday">00:00:00</span>
+      </span>
+    </div>
   </header>
 
   <form id="add-form">
@@ -22,9 +31,10 @@
     <button type="submit" title="Add task">+</button>
   </form>
 
-  <ul id="task-list"></ul>
-
-  <p id="empty-state" hidden>No tasks yet. Add one above.</p>
+  <div id="task-area">
+    <ul id="task-list"></ul>
+    <p id="empty-state" hidden>No tasks yet. Add one above.</p>
+  </div>
 
   <div id="footer-actions">
     <button id="clear-all" type="button" hidden>Clear all</button>
