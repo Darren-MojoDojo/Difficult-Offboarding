@@ -7,7 +7,6 @@
 </head>
 <body>
   <header>
-    <h1>Tasks</h1>
     <div id="totals">
       <span class="total-row">
         <span class="total-label">Today</span>
@@ -16,6 +15,10 @@
       <span class="total-row">
         <span class="total-label" id="yesterday-label">Yesterday</span>
         <span class="total-value" id="total-yesterday">00:00:00</span>
+      </span>
+      <span class="total-row" id="until-row">
+        <span class="total-label" id="until-label">Until 5:16pm</span>
+        <span class="total-value" id="total-until">00:00:00</span>
       </span>
     </div>
   </header>
@@ -65,6 +68,12 @@
         <input id="quick-adjust" type="number" min="0" step="1" placeholder="45" />
       </label>
       <p class="settings-hint">Minutes the −/+ buttons adjust the running task by. 0 hides them.</p>
+
+      <label class="settings-row">
+        <span>Daily cutoff time</span>
+        <input id="cutoff-time" type="time" />
+      </label>
+      <p class="settings-hint">The header shows a countdown until this time each day. Leave blank to hide.</p>
       <div class="settings-actions">
         <button type="button" id="settings-cancel">Cancel</button>
         <button type="button" id="settings-save">Save</button>

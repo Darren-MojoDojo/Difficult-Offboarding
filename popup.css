@@ -61,47 +61,45 @@ body {
 }
 
 header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: 12px;
   padding: 0 2px;
 }
 
-header h1 {
-  font-size: 17px;
-  margin: 0;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--color-indigo-950);
-}
-
 #totals {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 3px;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 6px;
 }
 
 .total-row {
-  display: inline-flex;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 7px;
-  padding: 3px 10px;
-  border-radius: 999px;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 6px;
+  border-radius: 10px;
   background: var(--glass-bg);
   backdrop-filter: blur(10px) saturate(180%);
   -webkit-backdrop-filter: blur(10px) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-highlight), 0 1px 2px rgba(30, 27, 75, 0.05);
+  text-align: center;
 }
 
 .total-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-text-placeholder);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .total-value {
@@ -109,6 +107,7 @@ header h1 {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--color-indigo-800);
+  white-space: nowrap;
 }
 
 #add-form {

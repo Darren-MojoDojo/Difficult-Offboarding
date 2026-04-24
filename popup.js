@@ -1,7 +1,7 @@
 const STORAGE_KEY = "tasks";
 const SETTINGS_KEY = "settings";
 const MINUTE_MS = 60 * 1000;
-const DEFAULT_SETTINGS = { maxUntitled: null, quickAdjustMinutes: 45 };
+const DEFAULT_SETTINGS = { maxUntitled: null, quickAdjustMinutes: 45, cutoffTime: "17:16" };
 
 const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage?.local;
 
@@ -66,6 +66,10 @@ const settingsCancelBtn = document.getElementById("settings-cancel");
 const settingsSaveBtn = document.getElementById("settings-save");
 const maxUntitledInput = document.getElementById("max-untitled");
 const quickAdjustInput = document.getElementById("quick-adjust");
+const cutoffTimeInput = document.getElementById("cutoff-time");
+const untilRowEl = document.getElementById("until-row");
+const untilLabelEl = document.getElementById("until-label");
+const totalUntilEl = document.getElementById("total-until");
 
 function elapsedMs(task) {
   const base = task.accumulatedMs || 0;
@@ -119,6 +123,32 @@ function dayStart(ts) {
   return d.getTime();
 }
 
+function parseCutoff(hhmm) {
+  if (!hhmm || typeof hhmm !== "string") return null;
+  const match = hhmm.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return { h, m };
+}
+
+function formatCutoffLabel(hhmm) {
+  const c = parseCutoff(hhmm);
+  if (!c) return "";
+  const period = c.h >= 12 ? "pm" : "am";
+  const h12 = c.h % 12 || 12;
+  return `${h12}:${String(c.m).padStart(2, "0")}${period}`;
+}
+
+function msUntilCutoff(hhmm) {
+  const c = parseCutoff(hhmm);
+  if (!c) return null;
+  const target = new Date();
+  target.setHours(c.h, c.m, 0, 0);
+  return Math.max(0, target.getTime() - Date.now());
+}
+
 function updateTotal() {
   const now = Date.now();
   const todayStart = dayStart(now);
@@ -136,6 +166,15 @@ function updateTotal() {
   totalTodayEl.textContent = formatTime(today);
   totalYesterdayEl.textContent = formatTime(yesterday);
   yesterdayLabelEl.textContent = DAY_FORMATTER.format(new Date(yesterdayStart));
+
+  const remaining = msUntilCutoff(settings.cutoffTime);
+  if (remaining === null) {
+    untilRowEl.hidden = true;
+  } else {
+    untilRowEl.hidden = false;
+    untilLabelEl.textContent = `Until ${formatCutoffLabel(settings.cutoffTime)}`;
+    totalUntilEl.textContent = formatTime(remaining);
+  }
 }
 
 function buildTaskInner(task) {
@@ -243,12 +282,25 @@ function updateTimeDisplays() {
   updateTotal();
 }
 
+function tickNeeded() {
+  return tasks.some((t) => t.runningStartedAt) || parseCutoff(settings.cutoffTime);
+}
+
+function scheduleNextTick() {
+  if (tickHandle) return;
+  const delay = 1000 - (Date.now() % 1000);
+  tickHandle = setTimeout(function onTick() {
+    tickHandle = null;
+    updateTimeDisplays();
+    if (tickNeeded()) scheduleNextTick();
+  }, delay);
+}
+
 function manageTick() {
-  const anyRunning = tasks.some((t) => t.runningStartedAt);
-  if (anyRunning && !tickHandle) {
-    tickHandle = setInterval(updateTimeDisplays, 500);
-  } else if (!anyRunning && tickHandle) {
-    clearInterval(tickHandle);
+  if (tickNeeded()) {
+    scheduleNextTick();
+  } else if (tickHandle) {
+    clearTimeout(tickHandle);
     tickHandle = null;
   }
 }
@@ -613,6 +665,7 @@ function openSettings() {
   maxUntitledInput.value = settings.maxUntitled == null ? "" : String(settings.maxUntitled);
   quickAdjustInput.value =
     settings.quickAdjustMinutes == null ? "" : String(Math.abs(settings.quickAdjustMinutes));
+  cutoffTimeInput.value = parseCutoff(settings.cutoffTime) ? settings.cutoffTime : "";
   settingsOverlay.hidden = false;
   maxUntitledInput.focus();
 }
@@ -640,7 +693,10 @@ async function saveSettingsFromForm() {
     }
   }
 
-  settings = { ...settings, maxUntitled, quickAdjustMinutes };
+  const rawCutoff = cutoffTimeInput.value.trim();
+  const cutoffTime = parseCutoff(rawCutoff) ? rawCutoff : null;
+
+  settings = { ...settings, maxUntitled, quickAdjustMinutes, cutoffTime };
   await settingsStore.set(settings);
   closeSettings();
   render();
@@ -657,7 +713,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-for (const input of [maxUntitledInput, quickAdjustInput]) {
+for (const input of [maxUntitledInput, quickAdjustInput, cutoffTimeInput]) {
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
