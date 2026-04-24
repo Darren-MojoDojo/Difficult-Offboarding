@@ -183,12 +183,14 @@ function buildTaskInner(task) {
   const timeStr = formatTime(elapsedMs(task));
   const dayLabel = formatDay(task.createdAt);
   const dayTitle = task.createdAt ? `Created ${formatFullDate(task.createdAt)}` : "";
+  const dayIdx = task.createdAt ? new Date(task.createdAt).getDay() : -1;
+  const dayClass = dayIdx >= 0 ? ` day-${dayIdx}` : "";
   return `
       <div class="task-row-top">
         ${isEditingName
           ? `<input class="name-edit" type="text" maxlength="80" spellcheck="false" />`
           : `<span class="task-name" title="Click to rename"></span>`}
-        ${dayLabel ? `<span class="day-chip" title="${dayTitle}">${dayLabel}</span>` : ""}
+        ${dayLabel ? `<span class="day-chip${dayClass}" title="${dayTitle}">${dayLabel}</span>` : ""}
         <button class="delete-btn" data-action="delete" title="Delete task">×</button>
       </div>
       <div class="task-row-bottom">
